@@ -5,8 +5,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.ThreadFactory;
 
-public class EchoServer {
+public class EchoServer implements Runnable{
 	public static final int PORT_NUMBER = 6013;
 
 	public static void main(String[] args) throws IOException, InterruptedException {
@@ -14,9 +15,14 @@ public class EchoServer {
 		server.start();
 	}
 
+	public void run(){
+		// read and send info from/to client
+	}
+
 	private void start() throws IOException, InterruptedException {
 		ServerSocket serverSocket = new ServerSocket(PORT_NUMBER);
 		while (true) {
+
 			Socket socket = serverSocket.accept();
 			InputStream inputStream = socket.getInputStream();
 			OutputStream outputStream = socket.getOutputStream();
@@ -25,3 +31,10 @@ public class EchoServer {
 		}
 	}
 }
+
+class ServerThreadFactory implements ThreadFactory {
+	public Thread newThread(Runnable r) {
+		return new Thread(r);
+	}
+}
+
