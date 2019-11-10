@@ -5,9 +5,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-public class EchoServer implements Runnable{
+public class EchoServer{
 	public static final int PORT_NUMBER = 6013;
 
 	public static void main(String[] args) throws IOException, InterruptedException {
@@ -15,26 +16,40 @@ public class EchoServer implements Runnable{
 		server.start();
 	}
 
-	public void run(){
-		// read and send info from/to client
-	}
-
 	private void start() throws IOException, InterruptedException {
 		ServerSocket serverSocket = new ServerSocket(PORT_NUMBER);
+		ExecutorService threadPool = Executors.newFixedThreadPool(25);
+
 		while (true) {
-
 			Socket socket = serverSocket.accept();
-			InputStream inputStream = socket.getInputStream();
-			OutputStream outputStream = socket.getOutputStream();
-
-			// Put your code here.
+			HandleServerThreads threads = new HandleServerThreads(socket);
+			threadPool.execute(threads);
 		}
 	}
 }
 
-class ServerThreadFactory implements ThreadFactory {
-	public Thread newThread(Runnable r) {
-		return new Thread(r);
+class HandleServerThreads implements Runnable{
+	Socket s;
+
+	HandleServerThreads(Socket s){
+		this.s = s;
+	}
+
+	public void run() {
+		while (true) {
+			try {
+				InputStream i = s.getInputStream();
+				OutputStream o = s.getOutputStream();
+				int byteRead;
+				while ((byteRead = i.read()) != -1) {
+					o.write(byteRead);
+				}
+				s.shutdownOutput();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 }
+
 

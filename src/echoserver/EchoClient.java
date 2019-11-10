@@ -4,9 +4,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.util.concurrent.ThreadFactory;
+import java.security.Key;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-public class EchoClient implements Runnable{
+public class EchoClient {
 	public static final int PORT_NUMBER = 6013;
 
 	public static void main(String[] args) throws IOException {
@@ -15,33 +17,61 @@ public class EchoClient implements Runnable{
 	}
 
 	private void start() throws IOException {
-		Socket socket = new Socket("localhost", PORT_NUMBER);
-		InputStream socketInputStream = socket.getInputStream();
-		OutputStream socketOutputStream = socket.getOutputStream();
+		while(true) {
+			Socket socket = new Socket("localhost", PORT_NUMBER);
+			ExecutorService threadPool = Executors.newFixedThreadPool(25);
 
-		// Put your code here.
-		int byteTyped;
+			HandleKeyThread KeyboardReader= new HandleKeyThread(socket);
+			threadPool.execute(KeyboardReader);
 
-		while((byteTyped = System.in.read()) != -1){
-			socketOutputStream.write(byteTyped);
-			System.out.write(socketInputStream.read());
+			HandleOutputThread ServerReader= new HandleOutputThread(socket);
+			threadPool.execute(ServerReader);
+
+
 		}
+	}
+}
+
+class HandleKeyThread implements Runnable {
+	Socket s;
+
+	public HandleKeyThread(Socket s){
+		this.s = s;
 	}
 
 	@Override
 	public void run() {
-		System.out.println("Running");
+		try {
+			OutputStream o = s.getOutputStream();
+			int byteTyped;
+			if ((byteTyped = System.in.read()) != -1) {
+				o.write(byteTyped);
+			}
+			s.shutdownOutput();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }
 
-class KeyboardThreadFactory implements ThreadFactory {
-	public Thread newThread(Runnable r) {
-		return new Thread(r);
-	}
-}
+class HandleOutputThread implements Runnable {
+	Socket s;
 
-class outputThreadFactory implements ThreadFactory {
-	public Thread newThread(Runnable r) {
-		return new Thread(r);
+	public HandleOutputThread(Socket s){
+		this.s = s;
+	}
+
+	@Override
+	public void run() {
+		try {
+			InputStream i = s.getInputStream();
+			if (i.read() != -1) {
+				System.out.write(i.read());
+			}
+			System.out.flush();
+			s.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }
