@@ -17,7 +17,7 @@ public class EchoClient {
 	}
 
 	private void start() throws IOException {
-		while(true) {
+
 			Socket socket = new Socket("localhost", PORT_NUMBER);
 			ExecutorService threadPool = Executors.newFixedThreadPool(25);
 
@@ -27,8 +27,6 @@ public class EchoClient {
 			HandleOutputThread ServerReader= new HandleOutputThread(socket);
 			threadPool.execute(ServerReader);
 
-
-		}
 	}
 }
 
@@ -44,7 +42,7 @@ class HandleKeyThread implements Runnable {
 		try {
 			OutputStream o = s.getOutputStream();
 			int byteTyped;
-			if ((byteTyped = System.in.read()) != -1) {
+			while((byteTyped = System.in.read()) != -1) {
 				o.write(byteTyped);
 			}
 			s.shutdownOutput();
@@ -65,7 +63,7 @@ class HandleOutputThread implements Runnable {
 	public void run() {
 		try {
 			InputStream i = s.getInputStream();
-			if (i.read() != -1) {
+			while (i.read() != -1) {
 				System.out.write(i.read());
 			}
 			System.out.flush();

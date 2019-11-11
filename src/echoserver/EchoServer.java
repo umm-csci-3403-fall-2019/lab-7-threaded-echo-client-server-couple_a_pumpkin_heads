@@ -20,11 +20,10 @@ public class EchoServer{
 		ServerSocket serverSocket = new ServerSocket(PORT_NUMBER);
 		ExecutorService threadPool = Executors.newFixedThreadPool(25);
 
-		while (true) {
 			Socket socket = serverSocket.accept();
 			HandleServerThreads threads = new HandleServerThreads(socket);
 			threadPool.execute(threads);
-		}
+
 	}
 }
 
